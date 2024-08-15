@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+  Marker
+} from "react-simple-maps";
+import * as turf from "@turf/turf";
 
 const excludedCountriesISOCodes = [
   "ATA",
@@ -12,6 +18,16 @@ const data = {
 };
 
 function App() {
+  const calculateArea = (geo) => {
+    const feature = turf.featureCollection([geo]);
+    const area = turf.area(feature);
+    return area;
+  };
+
+  const getLabelSize = (area) => {
+    return Math.max(2, (area / 100000000000) * 0.1);
+  };
+
   const handleMouseEnter = (code, data) => {
     console.log(code, data);
   };
@@ -20,7 +36,7 @@ function App() {
 
   return (
     <div className="bg-gray-200 w-3/4 rounded mx-auto mt-20">
-      <ComposableMap projection="geoMercator">
+      <ComposableMap projection="geoMercator" projectionConfig={{ scale: 140 }}>
         <Geographies geography="/countries-110m.json">
           {({ geographies }) =>
             geographies.map((geo) => {
@@ -46,6 +62,8 @@ function App() {
             geographies.map((geo) => {
               const name = geo.properties.NAME;
               const code = geo.properties.ISO_A3_EH;
+              const area = calculateArea(geo);
+              const labelSize = getLabelSize(area);
               const labelX = geo.properties.LABEL_X;
               const labelY = geo.properties.LABEL_Y;
 
@@ -53,7 +71,10 @@ function App() {
 
               return (
                 <Marker coordinates={[labelX, labelY]} fill="yellow">
-                  <text textAnchor="middle" style={{ fontSize: '5px', fill: 'yellow' }}>
+                  <text
+                    textAnchor="middle"
+                    style={{ fontSize: `${labelSize}px`, fill: 'yellow' }}
+                  >
                     {name}
                   </text>
                 </Marker>
